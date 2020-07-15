@@ -73,7 +73,7 @@ jobs:
         run: yarn && node ./load-database-schema.js
 
       - name: "Run pgRITA checks"
-        uses: pgrita/action@master
+        uses: pgrita/action@main
         env:
           PGRITA_TOKEN: ${{ secrets.PGRITA_TOKEN }}
         with:
