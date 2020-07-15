@@ -1,0 +1,42 @@
+name: Database checks
+
+on: [push]
+
+jobs:
+  pgrita:
+    runs-on: ubuntu-16.04
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+
+    services:
+      postgres:
+        image: postgres:11
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - "0.0.0.0:5432:5432"
+        # needed because the postgres container does not provide a healthcheck
+        options:
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v1
+
+      # Replace this with whatever your project needs to do to get your
+      # database up and running in the attached postgres service. This might be
+      # importing a database dump, running a string of migrations, running SQL
+      # files, or something else.
+      - name: "Load database schema"
+        run: yarn && node ./load-database-schema.js
+
+      - name: "Run pgRITA checks"
+        uses: pgrita/action@master
+        env:
+          PGRITA_TOKEN: ${{ secrets.PGRITA_TOKEN }}
+        with:
+          project: pgrita/action

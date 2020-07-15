@@ -1,0 +1,24 @@
+name: "pgRITA"
+description: "Run pgRITA checks against your PostgreSQL database"
+inputs:
+  project:
+    description: "The pgRITA project to run the analysis against."
+    required: true
+  pass-on-no-token:
+    description: "Set true if we should skip this action if there's no PGRITA_TOKEN present."
+    required: false
+    default: ""
+  pass-on-timeout:
+    description: "Set true if we should not fail if linting times out."
+    required: false
+    default: ""
+  database-url:
+    description: "The libpq-compatible connection string pointing to your database."
+    required: false
+    default: ""
+outputs:
+  status:
+    description: "The result status (ERROR / PASS / FAIL / TIMEOUT)."
+runs:
+  using: "node12"
+  main: "dist/index.js"

@@ -1,0 +1,31 @@
+{
+  "name": "@pgrita/action",
+  "version": "1.0.0",
+  "description": "GitHub Action for running pgRITA database checks.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pgrita/action.git"
+  },
+  "keywords": [],
+  "author": "Benjie Gillam <code@benjiegillam.com>",
+  "license": "AGPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/pgrita/action/issues"
+  },
+  "homepage": "https://github.com/pgrita/action#readme",
+  "dependencies": {
+    "@actions/core": "^1.2.4",
+    "form-data": "^3.0.0",
+    "node-fetch": "^2.6.0",
+    "pg": "^8.2.1",
+    "pg-connection-string": "^2.2.3"
+  },
+  "devDependencies": {
+    "@zeit/ncc": "^0.22.1"
+  }
+}
