@@ -65,7 +65,7 @@ async function main() {
   const parsed = parse(connectionString);
   const censoredConnectionString = censoredStringify(parsed);
 
-  console.log(`Running database checks again ${censoredConnectionString}`);
+  console.log(`Running database checks against ${censoredConnectionString}`);
 
   // git rev-parse --abbrev-ref HEAD
   const gitBranch = process.env.GITHUB_REF
