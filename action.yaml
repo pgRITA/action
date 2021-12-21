@@ -12,6 +12,10 @@ inputs:
     description: "Set true if we should not fail if linting times out."
     required: false
     default: ""
+  pass-on-fail:
+    description: "Set true if we should not fail if linting fails."
+    required: false
+    default: ""
   database-url:
     description: "The libpq-compatible connection string pointing to your database."
     required: false

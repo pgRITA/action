@@ -24,6 +24,8 @@ Input arguments:
   (`organizationname/projectname`) to run the checks within
 - `pass-on-timeout`: set this to `true` if we should pass the check if we
   couldn't get the results from pgRITA.sh within the 30 second timeout window
+- `pass-on-fail`: set this to `true` if we should pass the check if the
+  linting discovers any errors
 
 ## Outputs:
 
