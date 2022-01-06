@@ -153,6 +153,13 @@ main().then(
           return;
         }
         case "FAIL": {
+          const pof = core.getInput("pass-on-fail");
+          if (pof) {
+            console.log(
+              "Database schema has pgRITA errors, but pass-on-fail is set; passing."
+            );
+            return;
+          }
           core.setFailed("Your database schema has some pgRITA errors.");
           return;
         }
