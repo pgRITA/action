@@ -1,3 +1,4 @@
+// @ts-check
 /* 
   This file is part of @pgrita/action.
 
@@ -21,6 +22,9 @@ const { gzipSync } = require("zlib");
 const fetch = require("node-fetch");
 const FormData = require("form-data");
 
+/**
+ * @param {import("pg-connection-string").ConnectionOptions} parsed
+ */
 function censoredStringify(parsed) {
   let output = "postgres://";
   if (parsed.user || parsed.password) {
@@ -74,7 +78,9 @@ async function main() {
   // git rev-parse --verify HEAD
   const gitHash = process.env.GITHUB_SHA;
 
-  const pool = new pg.Pool(parsed);
+  /** @type {any} */
+  const parsedAny = parsed
+  const pool = new pg.Pool(parsedAny);
   try {
     const {
       rows: [{ introspection }],
@@ -117,7 +123,7 @@ async function main() {
     }
     const colonIndex = text.indexOf(":");
     if (colonIndex >= 0) {
-      const status = text.substr(0, colonIndex);
+      const status = text.substring(0, colonIndex);
       console.log(text);
       return { status, text };
     } else {

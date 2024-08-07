@@ -38432,6 +38432,7 @@ module.exports = JSON.parse('[[[0,44],"disallowed_STD3_valid"],[[45,46],"valid"]
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
+// @ts-check
 /* 
   This file is part of @pgrita/action.
 
@@ -38455,6 +38456,9 @@ const { gzipSync } = __nccwpck_require__(9796);
 const fetch = __nccwpck_require__(467);
 const FormData = __nccwpck_require__(4334);
 
+/**
+ * @param {import("pg-connection-string").ConnectionOptions} parsed
+ */
 function censoredStringify(parsed) {
   let output = "postgres://";
   if (parsed.user || parsed.password) {
@@ -38508,7 +38512,9 @@ async function main() {
   // git rev-parse --verify HEAD
   const gitHash = process.env.GITHUB_SHA;
 
-  const pool = new pg.Pool(parsed);
+  /** @type {any} */
+  const parsedAny = parsed
+  const pool = new pg.Pool(parsedAny);
   try {
     const {
       rows: [{ introspection }],
@@ -38551,7 +38557,7 @@ async function main() {
     }
     const colonIndex = text.indexOf(":");
     if (colonIndex >= 0) {
-      const status = text.substr(0, colonIndex);
+      const status = text.substring(0, colonIndex);
       console.log(text);
       return { status, text };
     } else {

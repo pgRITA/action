@@ -26,6 +26,8 @@
     "pg-connection-string": "^2.2.3"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.38.1"
+    "@types/node": "^22.1.0",
+    "@vercel/ncc": "^0.38.1",
+    "typescript": "^5.5.4"
   }
 }
