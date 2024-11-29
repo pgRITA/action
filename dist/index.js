@@ -41,9 +41,10 @@ with
 
   classes as (
     select pg_class.oid as _id, *,
+      pg_catalog.pg_relation_is_updatable(oid, true)::bit(8)::int4 as "updatable_mask",
       case when relkind = 'v' or relkind = 'm' then pg_get_viewdef(oid, false) else null end as "sql_viewdef"
     from pg_catalog.pg_class
-    where relnamespace in (select namespaces._id from namespaces where nspname <> 'information_schema' and nspname not like 'pg_%')
+    where relnamespace in (select namespaces._id from namespaces where nspname <> 'information_schema' and nspname not like 'pg\_%')
   ),
 
   attributes as (
@@ -62,9 +63,9 @@ with
   constraints as (
     select pg_constraint.oid as _id, *,
       pg_get_expr(conbin, coalesce(conrelid, contypid), true) as "sql_conbin",
-      pg_get_constraintdef(oid, false) as "sql_def"
+      (case when contype <> 'n' then pg_get_constraintdef(oid, false) else null end) as "sql_def"
     from pg_catalog.pg_constraint
-    where connamespace in (select namespaces._id from namespaces where nspname <> 'information_schema' and nspname not like 'pg_%')
+    where connamespace in (select namespaces._id from namespaces where nspname <> 'information_schema' and nspname not like 'pg\_%')
   ),
 
   sys_procs as (
@@ -78,7 +79,7 @@ with
       pg_get_expr(proargdefaults, 0, true) as "sql_proargdefaults",
       pg_get_function_identity_arguments(oid) as "sql_identity_arguments"
     from pg_catalog.pg_proc
-    where pronamespace in (select namespaces._id from namespaces where nspname <> 'information_schema' and nspname not like 'pg_%')
+    where pronamespace in (select namespaces._id from namespaces where nspname <> 'information_schema' and nspname not like 'pg\_%')
   ),
 
   aggregates as (
@@ -113,7 +114,8 @@ with
     select pg_type.oid as _id, *,
       pg_get_expr(typdefaultbin, 0, true) as "sql_typdefaultbin"
     from pg_catalog.pg_type
-    where typnamespace in (select namespaces._id from namespaces where nspname <> 'information_schema' and nspname not like 'pg_%') OR typnamespace = 'pg_catalog'::regnamespace
+    where (typnamespace in (select namespaces._id from namespaces where nspname <> 'information_schema' and nspname not like 'pg\_%'))
+    or (typnamespace = 'pg_catalog'::regnamespace)
   ),
 
   enums as (
@@ -201,19 +203,51 @@ with
   depends as (
     select *
     from pg_catalog.pg_depend
-    where deptype IN ('a', 'e') and ((classid = 'pg_catalog.pg_namespace'::regclass and objid in (select namespaces._id from namespaces)) OR (classid = 'pg_catalog.pg_class'::regclass and objid in (select classes._id from classes)) OR (classid = 'pg_catalog.pg_attribute'::regclass and objid in (select classes._id from classes) and objsubid > 0) OR (classid = 'pg_catalog.pg_constraint'::regclass and objid in (select constraints._id from constraints)) OR (classid = 'pg_catalog.pg_proc'::regclass and objid in (select procs._id from procs)) OR (classid = 'pg_catalog.pg_type'::regclass and objid in (select types._id from types)) OR (classid = 'pg_catalog.pg_enum'::regclass and objid in (select enums._id from enums)) OR (classid = 'pg_catalog.pg_extension'::regclass and objid in (select extensions._id from extensions)) OR (classid = 'pg_catalog.pg_foreign_data_wrapper'::regclass and objid in (select foreign_data_wrappers._id from foreign_data_wrappers)) OR (classid = 'pg_catalog.pg_foreign_server'::regclass and objid in (select foreign_servers._id from foreign_servers)) OR (classid = 'pg_catalog.pg_rewrite'::regclass and objid in (select rewrites._id from rewrites)) OR (classid = 'pg_catalog.pg_trigger'::regclass and objid in (select triggers._id from triggers)))
+    where deptype IN ('a', 'e') and (
+      (classid = 'pg_catalog.pg_namespace'::regclass and objid in (select namespaces._id from namespaces))
+      or (classid = 'pg_catalog.pg_class'::regclass and objid in (select classes._id from classes))
+      or (classid = 'pg_catalog.pg_attribute'::regclass and objid in (select classes._id from classes) and objsubid > 0)
+      or (classid = 'pg_catalog.pg_constraint'::regclass and objid in (select constraints._id from constraints))
+      or (classid = 'pg_catalog.pg_proc'::regclass and objid in (select procs._id from procs))
+      or (classid = 'pg_catalog.pg_type'::regclass and objid in (select types._id from types))
+      or (classid = 'pg_catalog.pg_enum'::regclass and objid in (select enums._id from enums))
+      or (classid = 'pg_catalog.pg_extension'::regclass and objid in (select extensions._id from extensions))
+      or (classid = 'pg_catalog.pg_foreign_data_wrapper'::regclass and objid in (select foreign_data_wrappers._id from foreign_data_wrappers))
+      or (classid = 'pg_catalog.pg_foreign_server'::regclass and objid in (select foreign_servers._id from foreign_servers))
+      or (classid = 'pg_catalog.pg_rewrite'::regclass and objid in (select rewrites._id from rewrites))
+      or (classid = 'pg_catalog.pg_trigger'::regclass and objid in (select triggers._id from triggers))
+    )
   ),
 
   descriptions as (
     select *
     from pg_catalog.pg_description
-    where ((classoid = 'pg_catalog.pg_namespace'::regclass and objoid in (select namespaces._id from namespaces)) OR (classoid = 'pg_catalog.pg_class'::regclass and objoid in (select classes._id from classes)) OR (classoid = 'pg_catalog.pg_attribute'::regclass and objoid in (select classes._id from classes) and objsubid > 0) OR (classoid = 'pg_catalog.pg_constraint'::regclass and objoid in (select constraints._id from constraints)) OR (classoid = 'pg_catalog.pg_proc'::regclass and objoid in (select procs._id from procs)) OR (classoid = 'pg_catalog.pg_type'::regclass and objoid in (select types._id from types)) OR (classoid = 'pg_catalog.pg_enum'::regclass and objoid in (select enums._id from enums)) OR (classoid = 'pg_catalog.pg_extension'::regclass and objoid in (select extensions._id from extensions)) OR (classoid = 'pg_catalog.pg_foreign_data_wrapper'::regclass and objoid in (select foreign_data_wrappers._id from foreign_data_wrappers)) OR (classoid = 'pg_catalog.pg_foreign_server'::regclass and objoid in (select foreign_servers._id from foreign_servers)) OR (classoid = 'pg_catalog.pg_rewrite'::regclass and objoid in (select rewrites._id from rewrites)) OR (classoid = 'pg_catalog.pg_trigger'::regclass and objoid in (select triggers._id from triggers)))
+    where (
+      (classoid = 'pg_catalog.pg_namespace'::regclass and objoid in (select namespaces._id from namespaces))
+      or (classoid = 'pg_catalog.pg_class'::regclass and objoid in (select classes._id from classes))
+      or (classoid = 'pg_catalog.pg_attribute'::regclass and objoid in (select classes._id from classes) and objsubid > 0)
+      or (classoid = 'pg_catalog.pg_constraint'::regclass and objoid in (select constraints._id from constraints))
+      or (classoid = 'pg_catalog.pg_proc'::regclass and objoid in (select procs._id from procs))
+      or (classoid = 'pg_catalog.pg_type'::regclass and objoid in (select types._id from types))
+      or (classoid = 'pg_catalog.pg_enum'::regclass and objoid in (select enums._id from enums))
+      or (classoid = 'pg_catalog.pg_extension'::regclass and objoid in (select extensions._id from extensions))
+      or (classoid = 'pg_catalog.pg_foreign_data_wrapper'::regclass and objoid in (select foreign_data_wrappers._id from foreign_data_wrappers))
+      or (classoid = 'pg_catalog.pg_foreign_server'::regclass and objoid in (select foreign_servers._id from foreign_servers))
+      or (classoid = 'pg_catalog.pg_rewrite'::regclass and objoid in (select rewrites._id from rewrites))
+      or (classoid = 'pg_catalog.pg_trigger'::regclass and objoid in (select triggers._id from triggers))
+    )
   ),
 
   stat_user_tables as (
     select *
     from pg_catalog.pg_stat_user_tables
     where relid in (select _id from classes)
+  ),
+
+  am as (
+    select pg_am.oid as _id, *
+    from pg_catalog.pg_am
+    where true
   )
 select json_build_object(
   'database',
@@ -283,7 +317,7 @@ select json_build_object(
   (select coalesce((select json_agg(row_to_json(indexes) order by indrelid, indexrelid) from indexes), '[]'::json)),
 
   'inherits',
-  (select coalesce((select json_agg(row_to_json(inherits) order by inhrelid) from inherits), '[]'::json)),
+  (select coalesce((select json_agg(row_to_json(inherits) order by inhrelid, inhseqno) from inherits), '[]'::json)),
 
   'languages',
   (select coalesce((select json_agg(row_to_json(languages) order by lanname) from languages), '[]'::json)),
@@ -309,9 +343,12 @@ select json_build_object(
   'stat_user_tables',
   (select coalesce((select json_agg(row_to_json(stat_user_tables) order by schemaname, relname) from stat_user_tables), '[]'::json)),
 
+  'am',
+  (select coalesce((select json_agg(row_to_json(am) order by amname) from am), '[]'::json)),
+
   'catalog_by_oid',
   (
-    select json_object_agg(oid, relname order by relname asc)
+    select json_object_agg(oid::text, relname order by relname asc)
     from pg_class
     where relnamespace = (
       select oid
